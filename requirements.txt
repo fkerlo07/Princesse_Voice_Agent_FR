@@ -1,0 +1,9 @@
+aiohttp
+chromadb
+ddgs
+duckduckgo-search
+numpy
+openwakeword
+piper-tts
+sounddevice
+vosk

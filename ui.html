@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Jarvis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #07060f;
+      color: #e2e2f0;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Ambient glow ──────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      position: relative;
+      padding: 40px;
+    }
+
+    .main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%,
+          var(--glow, transparent) 0%, transparent 70%);
+      pointer-events: none;
+      transition: background 0.8s;
+    }
+
+    body.state-sleeping {
+      --glow: rgba(80, 60, 140, .12);
+    }
+
+    body.state-listening {
+      --glow: rgba(34, 197, 94, .15);
+    }
+
+    body.state-thinking {
+      --glow: rgba(251, 191, 36, .15);
+    }
+
+    body.state-speaking {
+      --glow: rgba(99, 102, 241, .20);
+    }
+
+    /* ── Face wrapper ──────────────────────────────────────────── */
+    #face-wrap {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #face {
+      transition: filter 0.5s;
+    }
+
+    body.state-sleeping #face {
+      animation: breathe 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(100, 80, 180, .4));
+    }
+
+    body.state-thinking #face {
+      animation: think-sway 2.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 50px rgba(251, 191, 36, .6));
+    }
+
+    body.state-listening #face {
+      animation: listen-bob 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 50px rgba(34, 197, 94, .6));
+    }
+
+    body.state-speaking #face {
+      filter: drop-shadow(0 0 60px rgba(99, 102, 241, .7));
+    }
+
+    @keyframes breathe {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.03);
+      }
+    }
+
+    @keyframes think-sway {
+
+      0%,
+      100% {
+        transform: rotate(0);
+      }
+
+      25% {
+        transform: rotate(-1.5deg);
+      }
+
+      75% {
+        transform: rotate(1.5deg);
+      }
+    }
+
+    @keyframes listen-bob {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    /* ── Pulse rings ───────────────────────────────────────────── */
+    .pulse-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 2px solid rgba(34, 197, 94, .35);
+      opacity: 0;
+      transition: opacity .4s;
+    }
+
+    .pulse-ring.r2 {
+      inset: -44px;
+      border-color: rgba(34, 197, 94, .15);
+    }
+
+    body.state-listening .pulse-ring {
+      opacity: 1;
+      animation: pulse 1.6s ease-out infinite;
+    }
+
+    body.state-listening .pulse-ring.r2 {
+      animation: pulse 1.6s ease-out .5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(.92);
+        opacity: .8;
+      }
+
+      100% {
+        transform: scale(1.12);
+        opacity: 0;
+      }
+    }
+
+    /* ── Thinking orbit dots ───────────────────────────────────── */
+    .think-orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .4s;
+    }
+
+    body.state-thinking .think-orbit {
+      opacity: 1;
+    }
+
+    .think-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #fbbf24;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #fbbf24;
+    }
+
+    .think-dot:nth-child(1) {
+      animation: orbit1 2.4s ease-in-out infinite;
+    }
+
+    .think-dot:nth-child(2) {
+      animation: orbit1 2.4s ease-in-out .8s infinite;
+    }
+
+    .think-dot:nth-child(3) {
+      animation: orbit1 2.4s ease-in-out 1.6s infinite;
+    }
+
+    @keyframes orbit1 {
+      0% {
+        transform: translate(152px, -8px) scale(.6);
+        opacity: .3;
+      }
+
+      25% {
+        transform: translate(8px, -152px) scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: translate(-152px, -8px) scale(.6);
+        opacity: .3;
+      }
+
+      75% {
+        transform: translate(-8px, 152px) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(152px, -8px) scale(.6);
+        opacity: .3;
+      }
+    }
+
+    /* ── ZZZ (sleeping) ────────────────────────────────────────── */
+    .zzz-wrap {
+      position: absolute;
+      right: -20px;
+      top: 30px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .6s;
+    }
+
+    body.state-sleeping .zzz-wrap {
+      opacity: 1;
+    }
+
+    .zzz {
+      position: absolute;
+      font-weight: 700;
+      color: #9b8ec4;
+      animation: float-zzz 3s ease-in-out infinite;
+      right: 0;
+    }
+
+    .zzz:nth-child(1) {
+      animation-delay: 0s;
+      font-size: 13px;
+      right: 12px;
+    }
+
+    .zzz:nth-child(2) {
+      animation-delay: 1s;
+      font-size: 17px;
+      right: 2px;
+    }
+
+    .zzz:nth-child(3) {
+      animation-delay: 2s;
+      font-size: 21px;
+      right: -8px;
+    }
+
+    @keyframes float-zzz {
+      0% {
+        transform: translate(0, 0) rotate(-5deg);
+        opacity: 0;
+      }
+
+      20% {
+        opacity: .8;
+      }
+
+      100% {
+        transform: translate(28px, -58px) rotate(15deg);
+        opacity: 0;
+      }
+    }
+
+    /* ── SVG transitions ───────────────────────────────────────── */
+    /* Eyelid paths transition via d attribute */
+    #lid-l,
+    #lid-r {
+      transition: d 0.4s ease;
+    }
+
+    /* Glints fade with lids */
+    #glint-l,
+    #glint-r {
+      transition: opacity 0.4s;
+    }
+
+    /* Brow opacity */
+    #brows {
+      transition: opacity 0.4s;
+    }
+
+    /* Mouth morphing */
+    #mouth,
+    #mouth-fill {
+      transition: d 65ms ease-out, opacity 80ms;
+    }
+
+    /* ── Status badge ──────────────────────────────────────────── */
+    #status-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 30px;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .5);
+      backdrop-filter: blur(10px);
+    }
+
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .3);
+      transition: background .4s, box-shadow .4s;
+    }
+
+    body.state-sleeping #status-dot {
+      background: #7c70c0;
+    }
+
+    body.state-listening #status-dot {
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    body.state-thinking #status-dot {
+      background: #fbbf24;
+      box-shadow: 0 0 8px #fbbf24;
+      animation: dot-blink .8s steps(1) infinite;
+    }
+
+    body.state-speaking #status-dot {
+      background: #818cf8;
+      box-shadow: 0 0 8px #818cf8;
+    }
+
+    @keyframes dot-blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* ── Live text ─────────────────────────────────────────────── */
+    #live-text {
+      max-width: 520px;
+      text-align: center;
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, .55);
+      min-height: 52px;
+    }
+
+    /* ── Educational Display ───────────────────────────────────────── */
+    #edu-wrap {
+      /* Positioned below the buttons, taking up the remaining screen space */
+      position: absolute;
+      top: 15%;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: none;
+      align-items: flex-start;
+      /* Start from top instead of centering */
+      justify-content: center;
+      overflow-y: auto;
+      /* Enable vertical scrolling */
+      padding: 20px;
+
+      font-size: 150px;
+      font-weight: 700;
+      color: #fbbf24;
+      text-shadow: 0 0 50px rgba(251, 191, 36, 0.4);
+      z-index: 10;
+      letter-spacing: 5px;
+
+      /* Custom scrollbar for webkit */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(251, 191, 36, .5) transparent;
+    }
+
+    #edu-wrap::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #edu-wrap::-webkit-scrollbar-thumb {
+      background-color: rgba(251, 191, 36, .5);
+      border-radius: 4px;
+    }
+
+    #edu-wrap.visible {
+      display: flex;
+    }
+
+    #edu-wrap.grid-alpha {
+      flex-wrap: wrap;
+      max-width: 100%;
+      gap: 15px 25px;
+      font-size: 50px;
+      /* Slightly smaller to fit desktop width */
+    }
+
+    #edu-wrap.grid-count {
+      flex-wrap: wrap;
+      max-width: 100%;
+      gap: 15px 20px;
+      font-size: 45px;
+      /* Scaled down for 1-100 */
+    }
+
+    .edu-letter {
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .edu-letter.zoom {
+      transform: scale(1.6);
+      color: #34d399;
+      text-shadow: 0 0 60px rgba(52, 211, 153, 0.6);
+    }
+
+    /* ── Educational Buttons ─────────────────────────────────────── */
+    #edu-controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .btn-edu {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-edu:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    #btn-stop-edu {
+      display: none;
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    #btn-stop-edu.visible {
+      display: block;
+      animation: slideUp .3s ease;
+    }
+
+    #btn-stop-edu:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────────────── */
+    .sidebar {
+      width: 340px;
+      background: rgba(255, 255, 255, .025);
+      border-left: 1px solid rgba(255, 255, 255, .06);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px 20px;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .25);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    #chat-history {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .1) transparent;
+    }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      animation: slideUp .3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg .role-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .msg.user .role-label {
+      color: #818cf8;
+    }
+
+    .msg.assistant .role-label {
+      color: #34d399;
+    }
+
+    .msg .bubble {
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: rgba(255, 255, 255, .82);
+      border-left: 3px solid transparent;
+    }
+
+    .msg.user .bubble {
+      background: rgba(99, 102, 241, .08);
+      border-left-color: #818cf8;
+    }
+
+    .msg.assistant .bubble {
+      background: rgba(52, 211, 153, .06);
+      border-left-color: #34d399;
+    }
+
+    /* ── Search bar ────────────────────────────────────────────── */
+    #search-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(251, 191, 36, .08);
+      border: 1px solid rgba(251, 191, 36, .2);
+      border-radius: 8px;
+      font-size: 12px;
+      color: rgba(251, 191, 36, .8);
+      margin-bottom: 12px;
+    }
+
+    #search-bar.visible {
+      display: flex;
+      animation: slideUp .3s ease;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      border: 2px solid rgba(251, 191, 36, .3);
+      border-top-color: #fbbf24;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body class="state-sleeping">
+  <div class="main">
+    <div id="face-wrap">
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring r2"></div>
+      <div class="think-orbit">
+        <div class="think-dot"></div>
+        <div class="think-dot"></div>
+        <div class="think-dot"></div>
+      </div>
+      <div class="zzz-wrap">
+        <div class="zzz">z</div>
+        <div class="zzz">z</div>
+        <div class="zzz">Z</div>
+      </div>
+
+      <svg id="face" viewBox="0 0 120 120" width="280" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="fg" cx="42%" cy="35%">
+            <stop offset="0%" stop-color="#FFE666" />
+            <stop offset="100%" stop-color="#FFB300" />
+          </radialGradient>
+          <radialGradient id="blush" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#FF9090" stop-opacity=".45" />
+            <stop offset="100%" stop-color="#FF9090" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+
+        <!-- Face -->
+        <circle cx="60" cy="60" r="56" fill="url(#fg)" />
+        <ellipse cx="26" cy="74" rx="13" ry="8" fill="url(#blush)" />
+        <ellipse cx="94" cy="74" rx="13" ry="8" fill="url(#blush)" />
+
+        <!-- Eyes -->
+        <ellipse id="eye-l" cx="40" cy="50" rx="6.5" ry="6.5" fill="#2a2a3a" />
+        <ellipse id="eye-r" cx="80" cy="50" rx="6.5" ry="6.5" fill="#2a2a3a" />
+        <circle id="glint-l" cx="42.5" cy="47" r="2.2" fill="white" />
+        <circle id="glint-r" cx="82.5" cy="47" r="2.2" fill="white" />
+
+        <!--
+        Droopy eyelids: filled with face color to cover top of eye.
+        Path: "M L,topY A 6.5,3 0 0 1 R,topY Z"
+        - topY=44 → lid sits above eye (open)
+        - topY=51 → lid covers bottom half of eye (sleeping)
+        CSS d-transition animates between these.
+      -->
+        <path id="lid-l" fill="url(#fg)" d="M 33.5,43 A 6.5,3.5 0 0 1 46.5,43 Z" />
+        <path id="lid-r" fill="url(#fg)" d="M 73.5,43 A 6.5,3.5 0 0 1 86.5,43 Z" />
+
+        <!-- Eyebrows (thinking) -->
+        <g id="brows" opacity="0">
+          <path d="M 33 40 Q 40 35 47 38" stroke="#5a4a2a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+          <path d="M 73 38 Q 80 35 87 40" stroke="#5a4a2a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+        </g>
+
+        <!--
+        MOUTH — unified bezier structure for smooth CSS d-morphing:
+        M  x1,y1  C  cx1,cy1 cx2,cy2  x2,y2   ← upper lip arc
+        C  cx3,cy3 cx4,cy4  x1,y1  Z           ← lower lip / jaw arc
+
+        All shapes have the same path command count so CSS transitions work.
+      -->
+        <!-- Dark inner mouth (shows when open) -->
+        <path id="mouth-fill" d="M 41,79 C 52,79 68,79 79,79 C 68,79 52,79 41,79 Z" fill="#1a0a02" opacity="0" />
+        <!-- Outer mouth stroke + fill -->
+        <path id="mouth" d="M 38,78 C 52,74 68,74 82,78 C 68,84 52,84 38,78 Z" fill="none" stroke="#3a2010"
+          stroke-width="3.2" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <!-- Educational Display Overlay -->
+    <div id="edu-wrap"></div>
+
+    <div id="edu-controls">
+      <button class="btn-edu" id="btn-alpha" onclick="startEdu('alphabet')">Alphabet</button>
+      <button class="btn-edu" id="btn-read" onclick="startEdu('reading')">Lecture</button>
+      <button class="btn-edu" id="btn-count" onclick="startEdu('counting')">Compter</button>
+      <button class="btn-edu" id="btn-stop-edu" onclick="stopEdu()">Stop</button>
+    </div>
+
+    <div id="status-badge">
+      <div id="status-dot"></div>
+      <span id="status-text">En veille</span>
+    </div>
+
+    <div id="live-text"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-title">Conversation</div>
+    <div id="search-bar">
+      <div class="spinner"></div>
+      <span id="search-query">Recherche…</span>
+    </div>
+    <div id="chat-history"></div>
+  </div>
+
+  <script>
+    // ── Mouth shapes ───────────────────────────────────────────────────────────
+    // ALL use identical path format: M x1,y1 C cx1,cy1 cx2,cy2 x2,y2 C cx3,cy3 cx4,cy4 x1,y1 Z
+    // so CSS transition on 'd' attribute works smoothly.
+    const MOUTHS = {
+      // Sleeping — flat, very slightly downturned
+      sleeping: "M 40,80 C 52,79 68,79 80,80 C 68,81 52,81 40,80 Z",
+      // Rest — gentle relaxed smile
+      rest: "M 38,78 C 52,74 68,74 82,78 C 68,84 52,84 38,78 Z",
+      // Closed — lips pressed flat (p, b, m)
+      closed: "M 39,79 C 52,77 68,77 81,79 C 68,81 52,81 39,79 Z",
+      // U — slightly open, rounded (f, v, schwa)
+      U: "M 41,77 C 52,73 68,73 79,77 C 68,89 52,89 41,77 Z",
+      // E — wide, moderate opening (e, i, j)
+      E: "M 35,77 C 52,72 68,72 85,77 C 68,85 52,85 35,77 Z",
+      // O — rounded, open (o, u, ʃ, ʒ)
+      O: "M 43,74 C 52,70 68,70 77,74 C 68,94 52,94 43,74 Z",
+      // A — wide open, jaw fully dropped (a, ɑ, ɔ)
+      A: "M 38,72 C 52,67 68,67 82,72 C 68,100 52,100 38,72 Z",
+    };
+    // Inner mouth (dark) — slightly inset
+    const FILLS = {
+      sleeping: "M 42,80 C 52,79 68,79 78,80 C 68,80 52,80 42,80 Z",
+      rest: "M 40,79 C 52,75 68,75 80,79 C 68,83 52,83 40,79 Z",
+      closed: "M 41,79 C 52,78 68,78 79,79 C 68,79 52,79 41,79 Z",
+      U: "M 43,78 C 52,75 68,75 77,78 C 68,87 52,87 43,78 Z",
+      E: "M 37,78 C 52,73 68,73 83,78 C 68,84 52,84 37,78 Z",
+      O: "M 45,76 C 52,72 68,72 75,76 C 68,92 52,92 45,76 Z",
+      A: "M 40,74 C 52,69 68,69 80,74 C 68,97 52,97 40,74 Z",
+    };
+    const FILL_OP = { sleeping: 0, rest: 0, closed: 0, U: .8, E: .65, O: .9, A: .95 };
+
+    // Eyelid paths — face-colored arcs that cover top of eye
+    // Open (lid high):    M 33.5,43 A 6.5,3.5 0 0 1 46.5,43 Z
+    // Sleeping (dropped): M 33.5,52 A 6.5,3.5 0 0 1 46.5,52 Z
+    // Blink (full):       M 33.5,57 A 6.5,3.5 0 0 1 46.5,57 Z (below eye)
+    const LID_OPEN = { L: "M 33.5,43 A 6.5,3.5 0 0 1 46.5,43 Z", R: "M 73.5,43 A 6.5,3.5 0 0 1 86.5,43 Z" };
+    const LID_SLEEP = { L: "M 33.5,51 A 6.5,3.5 0 0 1 46.5,51 Z", R: "M 73.5,51 A 6.5,3.5 0 0 1 86.5,51 Z" };
+    const LID_BLINK = { L: "M 33.5,58 A 6.5,3.5 0 0 1 46.5,58 Z", R: "M 73.5,58 A 6.5,3.5 0 0 1 86.5,58 Z" };
+
+    const STATE_LABELS = {
+      sleeping: "En veille", listening: "J'écoute…",
+      thinking: "Je réfléchis…", speaking: "Je parle…"
+    };
+
+    // DOM refs
+    const mouthEl = document.getElementById('mouth');
+    const mouthFill = document.getElementById('mouth-fill');
+    const lidL = document.getElementById('lid-l');
+    const lidR = document.getElementById('lid-r');
+    const glintL = document.getElementById('glint-l');
+    const glintR = document.getElementById('glint-r');
+    const brows = document.getElementById('brows');
+    const statusText = document.getElementById('status-text');
+    const liveText = document.getElementById('live-text');
+    const chatHist = document.getElementById('chat-history');
+    const searchBar = document.getElementById('search-bar');
+    const searchQ = document.getElementById('search-query');
+    const eduWrap = document.getElementById('edu-wrap');
+    const faceWrap = document.getElementById('face-wrap');
+
+    // Buttons
+    const btnAlpha = document.getElementById('btn-alpha');
+    const btnRead = document.getElementById('btn-read');
+    const btnCount = document.getElementById('btn-count');
+    const btnStopEdu = document.getElementById('btn-stop-edu');
+
+    let visemeTimer = null;
+    let blinkInterval = null;
+    let curState = 'sleeping';
+    let wsConnection = null;
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function setMouth(key) {
+      const d = MOUTHS[key] ?? MOUTHS.rest;
+      const df = FILLS[key] ?? FILLS.rest;
+      const op = FILL_OP[key] ?? 0;
+      mouthEl.setAttribute('d', d);
+      mouthFill.setAttribute('d', df);
+      mouthFill.setAttribute('opacity', op);
+    }
+
+    function setLids(pos) {   // pos: 'open' | 'sleep' | 'blink'
+      const lPos = pos === 'sleep' ? LID_SLEEP : pos === 'blink' ? LID_BLINK : LID_OPEN;
+      lidL.setAttribute('d', lPos.L);
+      lidR.setAttribute('d', lPos.R);
+      const glintOp = pos === 'sleep' ? '0.15' : '1';
+      glintL.setAttribute('opacity', glintOp);
+      glintR.setAttribute('opacity', glintOp);
+    }
+
+    function startBlink(interval, lidBefore, lidAfter) {
+      stopBlink();
+      blinkInterval = setInterval(() => {
+        setLids('blink');
+        setTimeout(() => setLids(lidAfter), 120);
+      }, interval + Math.random() * 1500);
+    }
+    function stopBlink() {
+      clearInterval(blinkInterval);
+      blinkInterval = null;
+    }
+
+    function setViseme(key) {
+      setMouth(key);
+      clearTimeout(visemeTimer);
+      if (key !== 'rest') {
+        // Auto-return to rest if no new viseme arrives within 300ms (inter-word gaps)
+        visemeTimer = setTimeout(() => setMouth('rest'), 300);
+      }
+    }
+
+    function setState(state) {
+      curState = state;
+      document.body.className = `state-${state}`;
+      statusText.textContent = STATE_LABELS[state] || state;
+
+      brows.setAttribute('opacity', state === 'thinking' ? '1' : '0');
+      stopBlink();
+
+      if (state === 'sleeping') {
+        setLids('sleep');
+        setMouth('sleeping');
+        // Slow blink every ~6s
+        startBlink(6000, 'sleep', 'sleep');
+
+      } else if (state === 'thinking') {
+        setLids('open');
+        setMouth('rest');
+        // Occasional blink every ~3s
+        startBlink(3000, 'open', 'open');
+
+      } else if (state === 'listening') {
+        setLids('open');
+        setMouth('rest');
+        startBlink(4000, 'open', 'open');
+        liveText.textContent = '';
+
+      } else if (state === 'speaking') {
+        setLids('open');
+        // mouth controlled by viseme events
+        startBlink(5000, 'open', 'open');
+      }
+
+      if (state !== 'thinking') {
+        searchBar.classList.remove('visible');
+      }
+    }
+
+    function addMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = `
+    <div class="role-label">${role === 'user' ? '🎤 Vous' : '🤖 Jarvis'}</div>
+    <div class="bubble">${content}</div>`;
+      chatHist.appendChild(div);
+      chatHist.scrollTop = chatHist.scrollHeight;
+    }
+
+    function toggleEduMode(show) {
+      if (show) {
+        faceWrap.style.display = 'none';
+        eduWrap.classList.add('visible');
+        btnAlpha.style.display = 'none';
+        btnRead.style.display = 'none';
+        btnCount.style.display = 'none';
+        btnStopEdu.classList.add('visible');
+      } else {
+        faceWrap.style.display = 'flex';
+        eduWrap.classList.remove('visible', 'grid-alpha', 'grid-count');
+        eduWrap.innerHTML = '';
+        btnAlpha.style.display = 'block';
+        btnRead.style.display = 'block';
+        btnCount.style.display = 'block';
+        btnStopEdu.classList.remove('visible');
+      }
+    }
+
+    function startEdu(toolName) {
+      if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+        wsConnection.send(JSON.stringify({ type: 'start_edu', tool: toolName }));
+      }
+    }
+
+    function stopEdu() {
+      if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+        wsConnection.send(JSON.stringify({ type: 'stop_edu' }));
+      }
+    }
+
+    // ── WebSocket ──────────────────────────────────────────────────────────────
+    function connect() {
+      const ws = new WebSocket(`ws://${location.host}/ws`);
+      wsConnection = ws;
+
+      ws.onmessage = ({ data }) => {
+        const ev = JSON.parse(data);
+        switch (ev.type) {
+          case 'state': setState(ev.state); break;
+          case 'viseme': setViseme(ev.viseme); break;
+          case 'token': liveText.textContent += ev.token; break;
+          case 'message':
+            addMessage(ev.role, ev.content);
+            if (ev.role === 'user') liveText.textContent = '';
+            break;
+          case 'search':
+            searchQ.textContent = `🔍 ${ev.query}`;
+            searchBar.classList.add('visible');
+            break;
+          case 'edu_display':
+            toggleEduMode(true);
+            eduWrap.className = 'visible'; // reset specific grid classes
+            eduWrap.innerHTML = `<span class="edu-letter">${ev.text}</span>`;
+            break;
+          case 'edu_grid':
+            toggleEduMode(true);
+            eduWrap.className = `visible ${ev.gridClass || ''}`;
+            eduWrap.innerHTML = ev.items.map((item, i) => `<span class="edu-letter" id="edu-item-${i}">${item}</span>`).join('');
+            break;
+          case 'edu_reading':
+            toggleEduMode(true);
+            eduWrap.className = 'visible'; // reset specific grid classes
+            eduWrap.innerHTML = ev.word.split('').map((char, i) => `<span class="edu-letter" id="edu-item-${i}">${char}</span>`).join('');
+            break;
+          case 'edu_reading_zoom':
+            const letters = eduWrap.querySelectorAll('.edu-letter');
+            letters.forEach((l, i) => {
+              if (i === ev.index) l.classList.add('zoom');
+              else l.classList.remove('zoom');
+            });
+            break;
+          case 'edu_reading_unzoom':
+            eduWrap.querySelectorAll('.edu-letter').forEach(l => l.classList.remove('zoom'));
+            break;
+          case 'edu_hide':
+            toggleEduMode(false);
+            break;
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 2000);
+      ws.onerror = () => ws.close();
+    }
+    connect();
+
+    // Init sleeping state
+    setState('sleeping');
+  </script>
+</body>
+
+</html>

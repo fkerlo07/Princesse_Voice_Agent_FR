@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+venv/
+env/
+.env
+
+# MacOS
+.DS_Store
+
+# DB / Data
+chroma_db/
+stories/
+
+# Models (avoid pushing huge .onnx or vosk folders)
+*.onnx
+*.onnx.json
+vosk-model-*
+models/
