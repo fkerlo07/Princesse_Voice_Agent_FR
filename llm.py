@@ -26,7 +26,7 @@ _llm: ChatOllama | None = None
 
 
 def _get_llm(json_mode: bool = False) -> ChatOllama:
-    """Return a ChatOllama instance for gemma4:e2b."""
+    """Return a ChatOllama instance for gemma4:e2b (thinking always disabled)."""
     global _llm
     if _llm is None or json_mode:
         return ChatOllama(
@@ -35,6 +35,7 @@ def _get_llm(json_mode: bool = False) -> ChatOllama:
             keep_alive=OLLAMA_KEEP_ALIVE,
             format="json" if json_mode else None,
             temperature=0 if json_mode else None,
+            think=False,
         )
     return _llm
 
@@ -46,6 +47,7 @@ def _init_llm() -> None:
             model=GEMMA4_MODEL,
             base_url=OLLAMA_BASE_URL,
             keep_alive=OLLAMA_KEEP_ALIVE,
+            think=False,
         )
 
 

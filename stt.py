@@ -59,6 +59,7 @@ async def _transcribe_gemma4(audio_bytes: bytes) -> str:
 
     payload = {
         "model": GEMMA4_MODEL,
+        "options": {"think": False},   # disable thinking mode — prevents hallucination on audio
         "messages": [{
             "role": "user",
             "content": [
@@ -85,7 +86,7 @@ async def _transcribe_gemma4(audio_bytes: bytes) -> str:
             async with session.post(
                 f"{OLLAMA_BASE_URL}/v1/chat/completions",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=20),
+                timeout=aiohttp.ClientTimeout(total=60),  # 60s — Gemma 4 E2B needs time on CPU
             ) as resp:
                 resp.raise_for_status()
                 data = await resp.json()
