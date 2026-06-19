@@ -5,6 +5,7 @@ Run: python main.py
 import asyncio
 from datetime import datetime
 
+import gemma4_local
 from config import SYSTEM_PROMPT
 from llm import process_command
 from stt import State, load_oww, stt_worker, start_microphone
@@ -124,6 +125,9 @@ async def main() -> None:
             event_q.task_done()
 
     event_task = asyncio.create_task(event_worker())
+
+    # Preload Gemma 4 E2B (transformers/MPS) in executor — blocks until model is in memory
+    await asyncio.get_event_loop().run_in_executor(None, gemma4_local.load)
 
     # Load OWW in thread executor so it doesn't block the event loop
     oww = await asyncio.get_event_loop().run_in_executor(None, load_oww)

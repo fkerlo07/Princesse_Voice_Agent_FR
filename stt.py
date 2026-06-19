@@ -1,22 +1,18 @@
 """
-stt.py — Speech-to-text: Gemma 4 E2B audio transcription + OpenWakeWord detection.
-Audio is accumulated after wake word, encoded as WAV, then sent to Gemma 4 E2B
-via Ollama's OpenAI-compatible /v1/chat/completions endpoint.
+stt.py — Speech-to-text: Gemma 4 E2B (transformers/MPS) + OpenWakeWord detection.
+Audio is accumulated after wake word, then sent to gemma4_local.transcribe().
 """
 import asyncio
-import base64
-import io
 import time
-import wave
 
-import aiohttp
 import numpy as np
 import sounddevice as sd
 from openwakeword.model import Model as OWWModel
 
+import gemma4_local
 from config import (
-    GEMMA4_MODEL, MIC_BLOCKSIZE, MIC_DTYPE, MIC_RATE,
-    OLLAMA_BASE_URL, OWW_MODEL, OWW_THRESHOLD, LISTEN_TIMEOUT_S,
+    MIC_BLOCKSIZE, MIC_DTYPE, MIC_RATE,
+    OWW_MODEL, OWW_THRESHOLD, LISTEN_TIMEOUT_S,
 )
 from ui_server import broadcast, broadcast_sync
 
@@ -32,68 +28,9 @@ class State(Enum):
 
 
 # ── Silence detection ─────────────────────────────────────────────────────────
-_SILENCE_RMS    = 400   # int16 RMS below this = silence
-_SILENCE_CHUNKS = 12    # 12 × 80 ms = ~1 s of silence → commit
-_MIN_SPEECH_CHUNKS = 4  # ignore bursts < 4 × 80 ms = 320 ms
-
-
-# ── Audio helpers ─────────────────────────────────────────────────────────────
-
-def _pcm_to_wav_b64(pcm_bytes: bytes, rate: int = MIC_RATE) -> str:
-    """Encode raw int16 PCM bytes as a base64 WAV string."""
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)      # int16 = 2 bytes
-        wf.setframerate(rate)
-        wf.writeframes(pcm_bytes)
-    return base64.b64encode(buf.getvalue()).decode("utf-8")
-
-
-async def _transcribe_gemma4(audio_bytes: bytes) -> str:
-    """
-    Send accumulated audio to Gemma 4 E2B via Ollama's OpenAI-compatible endpoint.
-    Returns the transcribed French text, or "" if nothing was understood.
-    """
-    wav_b64 = _pcm_to_wav_b64(audio_bytes)
-
-    payload = {
-        "model": GEMMA4_MODEL,
-        "options": {"think": False},   # disable thinking mode — prevents hallucination on audio
-        "messages": [{
-            "role": "user",
-            "content": [
-                {
-                    "type": "input_audio",
-                    "input_audio": {"data": wav_b64, "format": "wav"},
-                },
-                {
-                    "type": "text",
-                    "text": (
-                        "Transcris exactement ce que dit la personne en français. "
-                        "Réponds UNIQUEMENT avec la transcription brute, sans ponctuation "
-                        "ajoutée, sans majuscule inutile, sans commentaire."
-                    ),
-                },
-            ],
-        }],
-        "stream": False,
-        "temperature": 0,
-    }
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{OLLAMA_BASE_URL}/v1/chat/completions",
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=60),  # 60s — Gemma 4 E2B needs time on CPU
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"[Gemma4 STT error]: {e}", flush=True)
-        return ""
+_SILENCE_RMS      = 400   # int16 RMS below this = silence
+_SILENCE_CHUNKS   = 12    # 12 × 80 ms ≈ 1 s of silence → commit
+_MIN_SPEECH_CHUNKS = 4    # ignore bursts < 4 × 80 ms = 320 ms
 
 
 # ── STT worker ────────────────────────────────────────────────────────────────
@@ -103,11 +40,11 @@ async def stt_worker(
     text_q:    asyncio.Queue,
     state_ref: list,
 ) -> None:
-    print("STT prêt (Gemma 4 E2B audio). Dites 'Hey Jarvis' pour m'activer.\n", flush=True)
+    print("STT prêt (Gemma 4 E2B / MPS). Dites 'Hey Jarvis' pour m'activer.\n", flush=True)
     await broadcast({"type": "state", "state": "sleeping"})
 
     audio_buffer: list[bytes] = []
-    listen_start = 0.0
+    listen_start  = 0.0
     silence_count = 0
 
     while True:
@@ -120,8 +57,8 @@ async def stt_worker(
 
         if state == State.LISTENING:
             if listen_start == 0.0:
-                listen_start = time.monotonic()
-                audio_buffer = []
+                listen_start  = time.monotonic()
+                audio_buffer  = []
                 silence_count = 0
 
             audio_buffer.append(data)
@@ -146,7 +83,10 @@ async def stt_worker(
                 audio_buffer  = []
                 silence_count = 0
 
-                text = await _transcribe_gemma4(pcm)
+                # Run blocking transcription in executor (does not block event loop)
+                text = await asyncio.get_event_loop().run_in_executor(
+                    None, gemma4_local.transcribe, pcm
+                )
                 print(f"[Gemma4 STT]: {text!r}", flush=True)
 
                 if text:
@@ -163,7 +103,7 @@ async def stt_worker(
         audio_q.task_done()
 
 
-# ── Microphone + OWW ─────────────────────────────────────────────────────────
+# ── Microphone + OpenWakeWord ─────────────────────────────────────────────────
 
 def load_oww() -> OWWModel:
     print("Chargement OpenWakeWord...", flush=True)

@@ -1,11 +1,11 @@
+accelerate
 aiohttp
 chromadb
 ddgs
 duckduckgo-search
-langchain-core
-langchain-ollama
-langgraph
 numpy
 openwakeword
 piper-tts
 sounddevice
+torch
+transformers
