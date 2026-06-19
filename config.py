@@ -8,13 +8,18 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 
 # ── Ollama ────────────────────────────────────────────────────────────────────
-OLLAMA_URL    = "http://127.0.0.1:11434/api/chat"
-LLM_MODEL     = "ministral-3:3b"   # main model — answers the user
-ROUTER_MODEL  = "gemma3:1b"        # small model — decides if web search needed
+OLLAMA_BASE_URL = "http://127.0.0.1:11434"          # used by LangChain
+OLLAMA_URL      = "http://127.0.0.1:11434/api/chat" # kept for legacy compat
+LLM_MODEL       = "ministral-3:3b"   # main model — answers the user
+ROUTER_MODEL    = "gemma3:1b"        # small model — decides if web search needed
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-PIPER_MODEL   = "/Users/floriankerlogot/models/fr_FR-siwis-medium.onnx"
-VOSK_MODEL_FR = "/Users/floriankerlogot/models/vosk-model-small-fr-0.22"
+PIPER_MODEL    = "/Users/floriankerlogot/models/fr_FR-siwis-medium.onnx"
+VOSK_MODEL_FR  = "/Users/floriankerlogot/models/vosk-model-small-fr-0.22"  # kept for reference
+
+# ── Whisper STT ───────────────────────────────────────────────────────────────
+# Sizes: tiny / base / small / medium — small is the best speed/accuracy tradeoff on M1
+WHISPER_MODEL  = "small"
 UI_HTML       = ROOT / "ui.html"
 CHROMA_DB_DIR = ROOT / "chroma_db"
 STORIES_DIR   = ROOT / "stories"
@@ -57,7 +62,9 @@ ROUTER_PROMPT = (
     "- 'learn_alphabet': si l'utilisateur veut apprendre l'alphabet (ex: 'je veux apprendre l\\'alphabet').\n"
     "- 'learn_reading': si l'utilisateur veut apprendre à lire (ex: 'apprends moi à lire').\n"
     "- 'learn_counting': si l'utilisateur veut apprendre à compter (ex: 'apprends moi à compter').\n"
+    "- 'learn_geography': si l'utilisateur veut apprendre la géographie ou les pays du monde (ex: 'apprends moi la géographie', 'montre-moi les pays sur la carte').\n"
+    "- 'learn_planets': si l'utilisateur veut apprendre les planètes du système solaire (ex: 'apprends moi les planètes', 'joue au quiz des planètes').\n"
     "- 'none': si aucune de ces actions n'est requise.\n\n"
     "Réponds UNIQUEMENT avec du JSON valide, au format suivant, sans explication.\n"
-    "Format attendu: {\"action\": \"web_search\" | \"play_story\" | \"learn_alphabet\" | \"learn_reading\" | \"learn_counting\" | \"none\", \"query\": \"requête si nécessaire, sinon vide\"}"
+    "Format attendu: {\"action\": \"web_search\" | \"play_story\" | \"learn_alphabet\" | \"learn_reading\" | \"learn_counting\" | \"learn_geography\" | \"none\", \"query\": \"requête si nécessaire, sinon vide\"}"
 )

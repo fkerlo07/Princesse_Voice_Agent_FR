@@ -448,6 +448,8 @@
       display: flex;
       gap: 15px;
       margin-top: 10px;
+      position: relative;   /* stay above the edu overlay */
+      z-index: 30;
     }
 
     .btn-edu {
@@ -470,22 +472,171 @@
       transform: translateY(-2px);
     }
 
-    #btn-stop-edu {
+    /* Buttons shown only during edu mode */
+    .btn-edu-active {
       display: none;
+    }
+    .btn-edu-active.visible {
+      display: block;
+      animation: slideUp .3s ease;
+    }
+
+    #btn-stop-tts {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    #btn-stop-tts:hover {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fde68a;
+    }
+
+    #btn-stop-edu {
       background: rgba(239, 68, 68, 0.1);
       border-color: rgba(239, 68, 68, 0.3);
       color: #ef4444;
       font-weight: 600;
     }
-
-    #btn-stop-edu.visible {
-      display: block;
-      animation: slideUp .3s ease;
-    }
-
     #btn-stop-edu:hover {
       background: rgba(239, 68, 68, 0.2);
       color: #f87171;
+    }
+
+    /* ── Geography map ─────────────────────────────────────────── */
+    #edu-wrap.geo-mode {
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-shadow: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      color: white;
+    }
+
+    #geo-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #geo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    #geo-status {
+      font-size: 17px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.5px;
+    }
+
+    #geo-score-display {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fbbf24;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    #world-map {
+      flex: 1;
+      width: 100%;
+      border-radius: 12px;
+      background: #0a0820;
+      min-height: 0;
+    }
+
+    .geo-country {
+      cursor: default;
+      /* fill/stroke are set entirely by D3 .style() so CSS class never fights them */
+    }
+
+    /* ── Planet quiz ────────────────────────────────────────────── */
+    #edu-wrap.planet-mode {
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-shadow: none;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      color: white;
+      padding: 0;
+    }
+
+    #planet-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #planet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 18px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.45);
+      flex-shrink: 0;
+    }
+
+    #planet-score { color: #fbbf24; }
+
+    #planet-svg-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #planet-svg-wrap svg {
+      max-height: 100%;
+      width: auto;
+    }
+
+    #planet-clue-box {
+      background: linear-gradient(135deg, rgba(28,22,72,.55), rgba(18,12,50,.55));
+      border-top: 1px solid rgba(100,80,200,.18);
+      padding: 13px 22px 16px;
+      flex-shrink: 0;
+      min-height: 76px;
+    }
+
+    #planet-clue-text {
+      font-size: 14px;
+      line-height: 1.72;
+      color: rgba(215,210,255,.90);
+      font-style: italic;
+      animation: slideUp .35s ease;
+    }
+
+    .planet-name-badge {
+      display: inline-block;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fbbf24;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      animation: slideUp .4s ease;
     }
 
     /* ── Sidebar ───────────────────────────────────────────────── */
@@ -683,10 +834,15 @@
     <div id="edu-wrap"></div>
 
     <div id="edu-controls">
+      <!-- Main mode buttons -->
       <button class="btn-edu" id="btn-alpha" onclick="startEdu('alphabet')">Alphabet</button>
       <button class="btn-edu" id="btn-read" onclick="startEdu('reading')">Lecture</button>
       <button class="btn-edu" id="btn-count" onclick="startEdu('counting')">Compter</button>
-      <button class="btn-edu" id="btn-stop-edu" onclick="stopEdu()">Stop</button>
+      <button class="btn-edu" id="btn-geo"     onclick="startEdu('geography')">🌍 Géographie</button>
+      <button class="btn-edu" id="btn-planets" onclick="startEdu('planets')">🪐 Planètes</button>
+      <!-- Edu mode buttons (hidden by default) -->
+      <button class="btn-edu btn-edu-active" id="btn-stop-tts" onclick="stopTts()">■ Stop</button>
+      <button class="btn-edu btn-edu-active" id="btn-stop-edu" onclick="stopEdu()">← Menu</button>
     </div>
 
     <div id="status-badge">
@@ -769,10 +925,13 @@
     const faceWrap = document.getElementById('face-wrap');
 
     // Buttons
-    const btnAlpha = document.getElementById('btn-alpha');
-    const btnRead = document.getElementById('btn-read');
-    const btnCount = document.getElementById('btn-count');
-    const btnStopEdu = document.getElementById('btn-stop-edu');
+    const btnAlpha    = document.getElementById('btn-alpha');
+    const btnRead     = document.getElementById('btn-read');
+    const btnCount    = document.getElementById('btn-count');
+    const btnGeo      = document.getElementById('btn-geo');
+    const btnPlanets  = document.getElementById('btn-planets');
+    const btnStopTts  = document.getElementById('btn-stop-tts');
+    const btnStopEdu  = document.getElementById('btn-stop-edu');
 
     let visemeTimer = null;
     let blinkInterval = null;
@@ -871,16 +1030,24 @@
         faceWrap.style.display = 'none';
         eduWrap.classList.add('visible');
         btnAlpha.style.display = 'none';
-        btnRead.style.display = 'none';
+        btnRead.style.display  = 'none';
         btnCount.style.display = 'none';
+        btnGeo.style.display     = 'none';
+        btnPlanets.style.display = 'none';
+        btnStopTts.classList.add('visible');
         btnStopEdu.classList.add('visible');
       } else {
+        geoCleanup();
+        solarCleanup();
         faceWrap.style.display = 'flex';
-        eduWrap.classList.remove('visible', 'grid-alpha', 'grid-count');
+        eduWrap.classList.remove('visible', 'grid-alpha', 'grid-count', 'geo-mode', 'planet-mode');
         eduWrap.innerHTML = '';
-        btnAlpha.style.display = 'block';
-        btnRead.style.display = 'block';
-        btnCount.style.display = 'block';
+        btnAlpha.style.display   = '';
+        btnRead.style.display    = '';
+        btnCount.style.display   = '';
+        btnGeo.style.display     = '';
+        btnPlanets.style.display = '';
+        btnStopTts.classList.remove('visible');
         btnStopEdu.classList.remove('visible');
       }
     }
@@ -891,10 +1058,571 @@
       }
     }
 
+    function stopTts() {
+      if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+        wsConnection.send(JSON.stringify({ type: 'stop_tts' }));
+      }
+    }
+
     function stopEdu() {
       if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
         wsConnection.send(JSON.stringify({ type: 'stop_edu' }));
       }
+    }
+
+    // ── Solar System Planet Quiz ──────────────────────────────────────────────
+
+    const SS_W = 900, SS_H = 900, SS_CX = 450, SS_CY = 450;
+
+    const SOLAR_DATA = {
+      mercure: { orbit: 82,  angle: 20,  r: 6.5, ring:false },
+      venus:   { orbit: 118, angle: 75,  r: 9.5, ring:false },
+      terre:   { orbit: 155, angle: 130, r: 10,  ring:false },
+      mars:    { orbit: 196, angle: 185, r: 7.5, ring:false },
+      jupiter: { orbit: 258, angle: 240, r: 23,  ring:false },
+      saturne: { orbit: 312, angle: 295, r: 18,  ring:true  },
+      uranus:  { orbit: 356, angle: 345, r: 13,  ring:false },
+      neptune: { orbit: 388, angle: 50,  r: 12,  ring:false },
+    };
+
+    const PLANET_NAMES_FR = {
+      mercure:"Mercure", venus:"Vénus", terre:"Terre", mars:"Mars",
+      jupiter:"Jupiter", saturne:"Saturne", uranus:"Uranus", neptune:"Neptune",
+    };
+
+    const PLANET_NAMES_FR = {
+      mercure:"Mercure", venus:"Vénus", terre:"Terre", mars:"Mars",
+      jupiter:"Jupiter", saturne:"Saturne", uranus:"Uranus", neptune:"Neptune",
+    };
+
+    function _ssXY(key) {
+      const d = SOLAR_DATA[key], a = d.angle * Math.PI / 180;
+      return { x: SS_CX + d.orbit * Math.cos(a), y: SS_CY + d.orbit * Math.sin(a) };
+    }
+
+    function _ssZoomVB(key) {
+      const d = SOLAR_DATA[key], { x, y } = _ssXY(key);
+      const mx = (SS_CX + x) / 2, my = (SS_CY + y) / 2;
+      const sz = Math.max(d.orbit * 2.5, 360);
+      return `${(mx - sz/2).toFixed(1)} ${(my - sz/2).toFixed(1)} ${sz} ${sz}`;
+    }
+
+    let _ssAnimId = null;
+    function _animVB(svgEl, toVB, ms) {
+      if (_ssAnimId) cancelAnimationFrame(_ssAnimId);
+      const from = (svgEl.getAttribute('viewBox') || `0 0 ${SS_W} ${SS_H}`).split(' ').map(Number);
+      const to   = toVB.split(' ').map(Number);
+      const t0   = performance.now();
+      const step = ts => {
+        const p = Math.min((ts - t0) / ms, 1);
+        const e = 1 - Math.pow(1 - p, 3);
+        svgEl.setAttribute('viewBox', from.map((f,i) => (f+(to[i]-f)*e).toFixed(2)).join(' '));
+        if (p < 1) _ssAnimId = requestAnimationFrame(step);
+      };
+      _ssAnimId = requestAnimationFrame(step);
+    }
+
+    let ssRevealedKeys = [];
+
+    // ── Per-planet surface detail (SVG fragments, clipped to planet body) ─────
+    function _pSurface(key, px, py, r, op) {
+      const f = v => v.toFixed(2);
+      const cl = id => ` clip-path="url(#sbc_${id})"`;
+      switch (key) {
+        case 'mercure': return [
+          `<circle cx="${f(px+r*.28)}" cy="${f(py-r*.25)}" r="${f(r*.19)}" fill="rgba(70,60,48,.55)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px-r*.33)}" cy="${f(py+r*.32)}" r="${f(r*.14)}" fill="rgba(65,55,44,.48)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px+r*.10)}" cy="${f(py+r*.44)}" r="${f(r*.11)}" fill="rgba(72,62,50,.44)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px-r*.15)}" cy="${f(py-r*.42)}" r="${f(r*.09)}" fill="rgba(68,58,47,.40)"${cl(key)} opacity="${op}"/>`,
+        ].join('');
+
+        case 'venus': return [
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.04)}" rx="${f(r*.88)}" ry="${f(r*.22)}" fill="rgba(255,248,210,.38)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.33)}" rx="${f(r*.76)}" ry="${f(r*.16)}" fill="rgba(242,220,152,.30)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.42)}" rx="${f(r*.70)}" ry="${f(r*.14)}" fill="rgba(230,200,130,.26)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r+2)}" fill="none" stroke="rgba(255,248,180,.25)" stroke-width="3.5" opacity="${op}"/>`,
+        ].join('');
+
+        case 'terre': return [
+          // Continents (simplified)
+          `<ellipse cx="${f(px+r*.30)}" cy="${f(py-r*.06)}" rx="${f(r*.38)}" ry="${f(r*.52)}" fill="rgba(36,112,42,.74)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px-r*.28)}" cy="${f(py+r*.22)}" rx="${f(r*.32)}" ry="${f(r*.44)}" fill="rgba(46,102,36,.70)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px+r*.05)}" cy="${f(py-r*.55)}" rx="${f(r*.22)}" ry="${f(r*.16)}" fill="rgba(80,130,70,.60)"${cl(key)} opacity="${op}"/>`,
+          // Polar caps
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.78)}" rx="${f(r*.58)}" ry="${f(r*.26)}" fill="rgba(228,242,255,.90)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.82)}" rx="${f(r*.40)}" ry="${f(r*.20)}" fill="rgba(218,235,255,.78)"${cl(key)} opacity="${op}"/>`,
+          // Atmosphere halo
+          `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r+2.5)}" fill="none" stroke="rgba(100,165,255,.34)" stroke-width="3.5" opacity="${op}"/>`,
+        ].join('');
+
+        case 'mars': return [
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.72)}" rx="${f(r*.50)}" ry="${f(r*.22)}" fill="rgba(238,245,252,.84)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px-r*.18)}" cy="${f(py+r*.08)}" rx="${f(r*.45)}" ry="${f(r*.35)}" fill="rgba(52,16,6,.36)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px+r*.20)}" cy="${f(py-r*.18)}" rx="${f(r*.30)}" ry="${f(r*.22)}" fill="rgba(60,22,10,.28)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r+1.8)}" fill="none" stroke="rgba(200,85,25,.24)" stroke-width="2.8" opacity="${op}"/>`,
+        ].join('');
+
+        case 'jupiter': return [
+          // Atmospheric bands
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.55)}" rx="${f(r*.96)}" ry="${f(r*.13)}" fill="rgba(162,98,50,.54)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.30)}" rx="${f(r*.97)}" ry="${f(r*.16)}" fill="rgba(220,178,115,.44)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.03)}" rx="${f(r*.97)}" ry="${f(r*.17)}" fill="rgba(152,82,36,.52)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.24)}" rx="${f(r*.96)}" ry="${f(r*.15)}" fill="rgba(210,158,78,.46)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.48)}" rx="${f(r*.95)}" ry="${f(r*.13)}" fill="rgba(145,80,28,.50)"${cl(key)} opacity="${op}"/>`,
+          // Great Red Spot
+          `<ellipse cx="${f(px+r*.28)}" cy="${f(py+r*.24)}" rx="${f(r*.23)}" ry="${f(r*.14)}" fill="rgba(192,55,26,.70)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px+r*.28)}" cy="${f(py+r*.24)}" rx="${f(r*.13)}" ry="${f(r*.08)}" fill="rgba(220,88,48,.52)"${cl(key)} opacity="${op}"/>`,
+        ].join('');
+
+        case 'saturne': return [
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.25)}" rx="${f(r*.88)}" ry="${f(r*.13)}" fill="rgba(192,152,68,.34)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.22)}" rx="${f(r*.85)}" ry="${f(r*.11)}" fill="rgba(172,136,55,.28)"${cl(key)} opacity="${op}"/>`,
+        ].join('');
+
+        case 'uranus': return [
+          `<ellipse cx="${f(px)}" cy="${f(py-r*.18)}" rx="${f(r*.82)}" ry="${f(r*.13)}" fill="rgba(110,225,235,.22)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px)}" cy="${f(py+r*.22)}" rx="${f(r*.78)}" ry="${f(r*.10)}" fill="rgba(90,210,220,.18)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r+2)}" fill="none" stroke="rgba(100,220,232,.20)" stroke-width="3" opacity="${op}"/>`,
+        ].join('');
+
+        case 'neptune': return [
+          `<ellipse cx="${f(px)}" cy="${f(py)}" rx="${f(r*.83)}" ry="${f(r*.10)}" fill="rgba(100,140,255,.40)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px-r*.22)}" cy="${f(py-r*.18)}" rx="${f(r*.28)}" ry="${f(r*.18)}" fill="rgba(8,12,80,.58)"${cl(key)} opacity="${op}"/>`,
+          `<ellipse cx="${f(px-r*.22)}" cy="${f(py-r*.30)}" rx="${f(r*.16)}" ry="${f(r*.09)}" fill="rgba(120,160,255,.42)"${cl(key)} opacity="${op}"/>`,
+          `<circle cx="${f(px)}" cy="${f(py)}" r="${f(r+2)}" fill="none" stroke="rgba(50,90,225,.24)" stroke-width="3" opacity="${op}"/>`,
+        ].join('');
+
+        default: return '';
+      }
+    }
+
+    // ── Saturn multi-band ring system ─────────────────────────────────────────
+    function _satRings(px, py, r, op, clipId) {
+      // Each band: [rx_mult, ry_mult, sw_mult, color, band_opacity]
+      const bands = [
+        [1.40, 0.38, 0.07, 'rgba(130,100,28,1)',  0.50],
+        [1.62, 0.42, 0.22, 'rgba(218,182,72,1)',  0.82],
+        [1.92, 0.45, 0.07, 'rgba(22,15,5,1)',     0.80],
+        [2.10, 0.46, 0.15, 'rgba(192,158,58,1)',  0.72],
+        [2.28, 0.47, 0.05, 'rgba(152,120,38,1)',  0.38],
+      ];
+      let back = '', front = '';
+      bands.forEach(([xm, ym, swm, c, bo]) => {
+        const rx=(r*xm).toFixed(1), ry=(r*ym).toFixed(1), sw=(r*swm).toFixed(1);
+        const oB=(op*bo).toFixed(2), oF=(op*bo*1.1).toFixed(2);
+        back  += `<ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" rx="${rx}" ry="${ry}" fill="none" stroke="${c}" stroke-width="${sw}" opacity="${oB}"/>`;
+        front += `<ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" rx="${rx}" ry="${ry}" fill="none" stroke="${c}" stroke-width="${sw}" opacity="${oF}" clip-path="url(#${clipId})"/>`;
+      });
+      return { back, front };
+    }
+
+    // ── Planet-specific radial gradient definitions ───────────────────────────
+    const _PLANET_GRADS = {
+      mercure: `<radialGradient id="spg_mercure" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#d0c0ae"/><stop offset="55%" stop-color="#8a7c6e"/><stop offset="100%" stop-color="#3c3028"/></radialGradient>`,
+      venus:   `<radialGradient id="spg_venus"   cx="38%" cy="28%" r="65%"><stop offset="0%" stop-color="#fff9e0"/><stop offset="45%" stop-color="#eaca50"/><stop offset="88%" stop-color="#c08020"/><stop offset="100%" stop-color="#7a4e10"/></radialGradient>`,
+      terre:   `<radialGradient id="spg_terre"   cx="38%" cy="30%" r="65%"><stop offset="0%" stop-color="#60b8e8"/><stop offset="50%" stop-color="#1868b0"/><stop offset="100%" stop-color="#082848"/></radialGradient>`,
+      mars:    `<radialGradient id="spg_mars"    cx="35%" cy="28%" r="65%"><stop offset="0%" stop-color="#ec8065"/><stop offset="50%" stop-color="#c04028"/><stop offset="100%" stop-color="#601008"/></radialGradient>`,
+      jupiter: `<radialGradient id="spg_jupiter" cx="38%" cy="28%" r="65%"><stop offset="0%" stop-color="#f2e2c0"/><stop offset="55%" stop-color="#d09858"/><stop offset="100%" stop-color="#885028"/></radialGradient>`,
+      saturne: `<radialGradient id="spg_saturne" cx="38%" cy="28%" r="65%"><stop offset="0%" stop-color="#faf4cc"/><stop offset="55%" stop-color="#d4b858"/><stop offset="100%" stop-color="#907030"/></radialGradient>`,
+      uranus:  `<radialGradient id="spg_uranus"  cx="38%" cy="28%" r="65%"><stop offset="0%" stop-color="#c5f0f8"/><stop offset="55%" stop-color="#48a8c8"/><stop offset="100%" stop-color="#105878"/></radialGradient>`,
+      neptune: `<radialGradient id="spg_neptune" cx="38%" cy="28%" r="65%"><stop offset="0%" stop-color="#4868e8"/><stop offset="50%" stop-color="#1830b0"/><stop offset="100%" stop-color="#060a60"/></radialGradient>`,
+    };
+
+    // ── Main solar system SVG builder ─────────────────────────────────────────
+    function buildSolarSVG(hlKey) {
+      const anyHL = hlKey !== null && hlKey !== undefined;
+      const W = SS_W, H = SS_H, CX = SS_CX, CY = SS_CY;
+
+      // Deterministic stars (3 size classes, occasional halos + colored)
+      let seed = 314159;
+      const rr = () => { seed = (Math.imul(1664525, seed) + 1013904223)|0; return (seed>>>0)/4294967296; };
+      const stars = Array.from({length: 260}, () => {
+        const x=(rr()*W).toFixed(1), y=(rr()*H).toFixed(1);
+        const bright = rr() < .045;
+        const r2 = bright ? 2.8 : rr()<.22 ? 1.5 : .85;
+        const op = bright ? (.60+rr()*.38).toFixed(2) : (.08+rr()*.52).toFixed(2);
+        const c  = rr()<.06?'#ffd8a8':rr()<.06?'#b0c8ff':'white';
+        const halo = bright ? `<circle cx="${x}" cy="${y}" r="${(r2*2.8).toFixed(1)}" fill="${c}" opacity="${(Number(op)*.22).toFixed(2)}"/>` : '';
+        return halo + `<circle cx="${x}" cy="${y}" r="${r2}" fill="${c}" opacity="${op}"/>`;
+      }).join('');
+
+      // Defs: gradients, filters, clip paths
+      let defs = `
+        <radialGradient id="ssBg" cx="48%" cy="52%">
+          <stop offset="0%" stop-color="#0e0c28"/><stop offset="100%" stop-color="#020210"/>
+        </radialGradient>
+        <linearGradient id="ssMilky" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="rgba(140,130,200,0)"/>
+          <stop offset="35%"  stop-color="rgba(140,130,200,.095)"/>
+          <stop offset="50%"  stop-color="rgba(165,155,225,.14)"/>
+          <stop offset="65%"  stop-color="rgba(140,130,200,.095)"/>
+          <stop offset="100%" stop-color="rgba(140,130,200,0)"/>
+        </linearGradient>
+        <radialGradient id="ssSunBody" cx="40%" cy="37%">
+          <stop offset="0%"   stop-color="#fffff2"/>
+          <stop offset="25%"  stop-color="#fff480"/>
+          <stop offset="65%"  stop-color="#ffcc00"/>
+          <stop offset="100%" stop-color="#ff8000"/>
+        </radialGradient>
+        <radialGradient id="ssSunCorona" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="rgba(255,200,50,.40)"/>
+          <stop offset="55%"  stop-color="rgba(255,140,20,.12)"/>
+          <stop offset="100%" stop-color="rgba(255,100,0,0)"/>
+        </radialGradient>
+        <filter id="fsSun" x="-110%" y="-110%" width="320%" height="320%">
+          <feGaussianBlur stdDeviation="18" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fsSunBright" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="5"/>
+        </filter>`;
+
+      // Planet gradients
+      Object.values(_PLANET_GRADS).forEach(g => { defs += g; });
+
+      // Planet filters + clip paths (per planet)
+      Object.entries(SOLAR_DATA).forEach(([key, d]) => {
+        const isH = key === hlKey;
+        defs += `<filter id="sgf_${key}" x="-130%" y="-130%" width="360%" height="360%">
+          <feGaussianBlur stdDeviation="${isH ? 11 : 3}" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>`;
+        const {x, y} = _ssXY(key);
+        // Body clip (for surface features)
+        defs += `<clipPath id="sbc_${key}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${d.r}"/></clipPath>`;
+        // Saturn front-ring clip
+        if (d.ring) defs += `<clipPath id="src_${key}"><rect x="0" y="${y.toFixed(1)}" width="${W}" height="${H}"/></clipPath>`;
+      });
+
+      // Asteroid belt (Mars–Jupiter zone)
+      let aseed = 99991;
+      const ar = () => { aseed = (Math.imul(1664525, aseed) + 1013904223)|0; return (aseed>>>0)/4294967296; };
+      const asteroids = Array.from({length: 95}, () => {
+        const a = ar()*2*Math.PI, dist = 210 + ar()*36;
+        return `<circle cx="${(CX+dist*Math.cos(a)).toFixed(1)}" cy="${(CY+dist*Math.sin(a)).toFixed(1)}" r="${(.5+ar()*.9).toFixed(1)}" fill="rgba(130,115,92,${(.16+ar()*.32).toFixed(2)})"/>`;
+      }).join('');
+
+      // Orbit rings
+      const orbits = Object.entries(SOLAR_DATA).map(([key, d]) => {
+        const isH = key === hlKey;
+        const op = anyHL ? (isH ? .55 : .16) : .26;
+        return `<circle cx="${CX}" cy="${CY}" r="${d.orbit}" fill="none"
+          stroke="${isH?'rgba(200,200,255,'+op+')':'rgba(140,140,200,'+op+')'}"
+          stroke-width="${isH?1.0:.55}" stroke-dasharray="3 9"/>`;
+      }).join('');
+
+      // Sun (3 layers + animated outer corona)
+      const sun = `
+        <circle cx="${CX}" cy="${CY}" r="85" fill="url(#ssSunCorona)" opacity=".75">
+          <animate attributeName="r"       values="82;94;82"    dur="5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".75;.40;.75" dur="5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="${CX}" cy="${CY}" r="52" fill="url(#ssSunCorona)" opacity=".55">
+          <animate attributeName="r"       values="50;58;50"    dur="3.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="${CX}" cy="${CY}" r="30" fill="url(#ssSunBody)" filter="url(#fsSun)"/>
+        <circle cx="${CX-8}" cy="${CY-8}" r="11" fill="rgba(255,255,240,.52)" filter="url(#fsSunBright)"/>
+        <text x="${CX}" y="${CY+47}" text-anchor="middle" font-family="Inter,sans-serif"
+          font-size="11" fill="rgba(255,218,70,.90)" font-weight="600" letter-spacing="1">Soleil</text>`;
+
+      // Build planet layers
+      let backRings='', pulses='', bodies='', frontRings='', nameLabels='';
+
+      Object.entries(SOLAR_DATA).forEach(([key, d]) => {
+        const isH   = key === hlKey;
+        const isRev = ssRevealedKeys.includes(key);
+        const op    = anyHL ? (isH ? 1.0 : 0.48) : 0.90;
+        const {x, y} = _ssXY(key);
+        const px = x.toFixed(1), py = y.toFixed(1);
+
+        // Two-ring pulse for highlighted planet
+        if (isH) pulses += `
+          <circle cx="${px}" cy="${py}" r="${d.r}" fill="none" stroke="#fde68a" stroke-width="2.8">
+            <animate attributeName="r"       values="${d.r};${d.r*5.5}" dur="1.9s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".90;0"              dur="1.9s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="${px}" cy="${py}" r="${d.r}" fill="none" stroke="#fbbf24" stroke-width="2.2">
+            <animate attributeName="r"       values="${d.r};${d.r*5.5}" dur="1.9s" begin=".7s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".65;0"              dur="1.9s" begin=".7s" repeatCount="indefinite"/>
+          </circle>`;
+
+        // Saturn multi-band ring system
+        if (d.ring) {
+          const rings = _satRings(x, y, d.r, op, `src_${key}`);
+          backRings += rings.back; frontRings += rings.front;
+        }
+
+        // Planet body
+        bodies += `<circle cx="${px}" cy="${py}" r="${d.r}" fill="url(#spg_${key})" filter="url(#sgf_${key})" opacity="${op}"/>`;
+
+        // Surface features (bands, craters, continents, polar caps, storms…)
+        bodies += _pSurface(key, x, y, d.r, op);
+
+        // Name label (fades in once planet is identified)
+        if (isRev) {
+          const ly = (y - d.r - 9).toFixed(1);
+          nameLabels += `<text x="${px}" y="${ly}" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="${isH?14:10}" font-weight="${isH?'700':'400'}"
+            fill="${isH?'#fde68a':'rgba(255,255,255,.58)'}" letter-spacing=".5">
+            ${PLANET_NAMES_FR[key]}</text>`;
+        }
+      });
+
+      return `<svg id="ss-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">
+        <defs>${defs}</defs>
+        <rect width="${W}" height="${H}" fill="url(#ssBg)"/>
+        <!-- Milky Way band -->
+        <rect x="-50" y="340" width="1000" height="220" fill="url(#ssMilky)" transform="rotate(-22 ${CX} ${CY})"/>
+        <!-- Nebula wisps -->
+        <circle cx="120" cy="155" r="220" fill="rgba(48,26,118,.042)"/>
+        <circle cx="800" cy="765" r="248" fill="rgba(88,22,98,.038)"/>
+        <circle cx="762" cy="118" r="192" fill="rgba(14,44,138,.045)"/>
+        ${stars}
+        ${asteroids}
+        ${orbits}
+        ${sun}
+        ${backRings}${pulses}${bodies}${frontRings}${nameLabels}
+      </svg>`;
+    }
+
+    function initPlanetDisplay() {
+      ssRevealedKeys = [];
+      eduWrap.className = 'visible planet-mode';
+      eduWrap.innerHTML = `
+        <div id="planet-container">
+          <div id="planet-header">
+            <span id="planet-round">Planète 1</span>
+            <span id="planet-score">Score : 0</span>
+          </div>
+          <div id="planet-svg-wrap">${buildSolarSVG(null)}</div>
+          <div id="planet-clue-box"><div id="planet-clue-text">…</div></div>
+        </div>`;
+    }
+
+    function showPlanet(ev) {
+      const wrap = document.getElementById('planet-svg-wrap');
+      if (!wrap) return;
+      const key = ev.planet;
+      if (ev.show_name && key && !ssRevealedKeys.includes(key)) ssRevealedKeys.push(key);
+      const oldSvg  = document.getElementById('ss-svg');
+      const savedVB = oldSvg ? oldSvg.getAttribute('viewBox') : `0 0 ${SS_W} ${SS_H}`;
+      const hlKey   = ev.show_name ? null : key;
+      wrap.innerHTML = buildSolarSVG(hlKey);
+      const svg      = document.getElementById('ss-svg');
+      const targetVB = ev.show_name ? `0 0 ${SS_W} ${SS_H}` : _ssZoomVB(key);
+      if (svg) { svg.setAttribute('viewBox', savedVB); _animVB(svg, targetVB, 950); }
+      const rEl = document.getElementById('planet-round');
+      if (rEl && ev.round) rEl.textContent = `Planète ${ev.round} / ${ev.total}`;
+      const sEl = document.getElementById('planet-score');
+      if (sEl && ev.score !== undefined) sEl.textContent = `Score : ${ev.score}`;
+      const cEl = document.getElementById('planet-clue-text');
+      if (cEl) {
+        const n = document.createElement('div');
+        n.id = 'planet-clue-text'; n.textContent = ev.clue || '';
+        cEl.replaceWith(n);
+      }
+    }
+
+    function solarCleanup() {
+      if (_ssAnimId) { cancelAnimationFrame(_ssAnimId); _ssAnimId = null; }
+      ssRevealedKeys = [];
+    }
+
+    // ── Geography Map ─────────────────────────────────────────────────────────
+    const GEO_VB_DEFAULT = '0 0 800 420';   // default full-world viewBox
+    let geoSvgSel       = null;
+    let geoMapReady     = false;
+    let geoFlashTmr     = null;
+    let geoZoomTmr      = null;
+    let geoScoreVal     = 0;
+    let geoHighlightQueue = [];
+
+    function _loadScript(url) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = url; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    // Zoom the SVG viewBox to frame a country (2× zoom centred on its bbox)
+    function _zoomToCountry(numId) {
+      if (!geoSvgSel) return;
+      const el = document.getElementById(`gc-${numId}`);
+      if (!el) return;
+      try {
+        const b = el.getBBox();
+        if (!b.width && !b.height) return;   // empty path (e.g. tiny island)
+
+        const aspect = 800 / 420;            // original viewBox ratio
+        const pad    = Math.max(b.width, b.height, 30) * 0.9;
+        const cx     = b.x + b.width  / 2;
+        const cy     = b.y + b.height / 2;
+
+        // Choose window so the country fills ~50 % of the view (≈ 2× zoom)
+        let w = b.width  + 2 * pad;
+        let h = b.height + 2 * pad;
+
+        // Enforce the original aspect ratio
+        if (w / h > aspect) { h = w / aspect; }
+        else                 { w = h * aspect; }
+
+        // Hard limits: never smaller than 80 units wide, never bigger than full map
+        w = Math.min(Math.max(w, 80), 780);
+        h = w / aspect;
+
+        geoSvgSel.transition()
+          .duration(750)
+          .ease(d3.easeCubicInOut)
+          .attr('viewBox', `${cx - w/2} ${cy - h/2} ${w} ${h}`);
+      } catch (_) {}   // getBBox can throw for detached elements
+    }
+
+    // Smoothly zoom back to the full-world view
+    function _zoomOut() {
+      if (!geoSvgSel) return;
+      geoSvgSel.transition()
+        .duration(650)
+        .ease(d3.easeCubicInOut)
+        .attr('viewBox', GEO_VB_DEFAULT);
+    }
+
+    async function initGeoMap() {
+      eduWrap.className = 'visible geo-mode';
+      eduWrap.innerHTML = `
+        <div id="geo-container">
+          <div id="geo-header">
+            <span id="geo-status">Chargement de la carte…</span>
+            <span id="geo-score-display">Score : 0</span>
+          </div>
+          <svg id="world-map" viewBox="${GEO_VB_DEFAULT}" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>`;
+
+      try {
+        await _loadScript('https://d3js.org/d3.v7.min.js');
+        await _loadScript('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js');
+
+        const world = await d3.json(
+          'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
+        );
+
+        const W = 800, H = 420;
+        const proj   = d3.geoNaturalEarth1().scale(145).translate([W / 2, H / 2]);
+        const pathFn = d3.geoPath().projection(proj);
+
+        geoSvgSel = d3.select('#world-map');
+
+        // Graticule
+        geoSvgSel.append('path')
+          .datum(d3.geoGraticule()())
+          .attr('d', pathFn)
+          .attr('fill', 'none')
+          .attr('stroke', '#1e1b3a')
+          .attr('stroke-width', 0.3);
+
+        // Country paths — use .style() (inline) so highlights always win
+        const countries = topojson.feature(world, world.objects.countries);
+        geoSvgSel.selectAll('.geo-country')
+          .data(countries.features)
+          .join('path')
+          .attr('class', 'geo-country')
+          .attr('id', d => `gc-${d.id}`)
+          .attr('d', pathFn)
+          .style('fill',         '#1a1744')
+          .style('stroke',       '#3d3a6b')
+          .style('stroke-width', '0.4px');
+
+        // Borders mesh on top
+        geoSvgSel.append('path')
+          .datum(topojson.mesh(world, world.objects.countries, (a, b) => a !== b))
+          .attr('d', pathFn)
+          .attr('fill', 'none')
+          .attr('stroke', '#2a2760')
+          .attr('stroke-width', 0.5)
+          .attr('pointer-events', 'none');
+
+        const statusEl = document.getElementById('geo-status');
+        if (statusEl) statusEl.textContent = 'Quel est ce pays ?';
+
+        geoMapReady = true;
+        geoHighlightQueue.forEach(e => _applyHighlight(e));
+        geoHighlightQueue = [];
+
+      } catch (err) {
+        console.error('Geo map failed:', err);
+        const s = document.getElementById('geo-status');
+        if (s) s.textContent = '⚠️ Carte non disponible (connexion internet requise)';
+      }
+    }
+
+    function _resetAllCountries() {
+      if (!geoSvgSel) return;
+      geoSvgSel.selectAll('.geo-country')
+        .style('fill',         '#1a1744')
+        .style('stroke',       '#3d3a6b')
+        .style('stroke-width', '0.4px');
+    }
+
+    function _applyHighlight(ev) {
+      if (!geoSvgSel) return;
+      const { id, state, score, round, total } = ev;
+
+      // Cancel pending timers
+      if (geoFlashTmr) { clearInterval(geoFlashTmr);  geoFlashTmr = null; }
+      if (geoZoomTmr)  { clearTimeout(geoZoomTmr);    geoZoomTmr  = null; }
+
+      _resetAllCountries();
+
+      if (!id || state === 'none') {
+        _zoomOut();
+        return;
+      }
+
+      const el = geoSvgSel.select(`#gc-${id}`);
+      if (el.empty()) return;
+
+      if (state === 'question') {
+        // Yellow pulse + zoom in on the country
+        el.style('fill', '#fbbf24').style('stroke', '#f59e0b').style('stroke-width', '2px');
+        let bright = true;
+        geoFlashTmr = setInterval(() => {
+          el.style('fill', bright ? '#fbbf24' : '#f97316');
+          bright = !bright;
+        }, 650);
+        _zoomToCountry(id);
+
+        const st = document.getElementById('geo-status');
+        if (st && round) st.textContent = `Pays ${round} / ${total} — Quel est ce pays ?`;
+
+      } else if (state === 'correct') {
+        // Green — stay zoomed briefly then pan out
+        el.style('fill', '#34d399').style('stroke', '#10b981').style('stroke-width', '2px');
+        if (score !== undefined) {
+          geoScoreVal = score;
+          const sc = document.getElementById('geo-score-display');
+          if (sc) sc.textContent = `Score : ${score}`;
+        }
+        geoZoomTmr = setTimeout(_zoomOut, 1100);
+
+      } else if (state === 'reveal') {
+        // Red — stay zoomed briefly then pan out
+        el.style('fill', '#f87171').style('stroke', '#ef4444').style('stroke-width', '2px');
+        geoZoomTmr = setTimeout(_zoomOut, 1100);
+      }
+    }
+
+    function geoHighlight(id, state, score, round, total) {
+      const ev = { id, state, score, round, total };
+      if (!geoMapReady) { geoHighlightQueue.push(ev); return; }
+      _applyHighlight(ev);
+    }
+
+    function geoCleanup() {
+      if (geoFlashTmr) { clearInterval(geoFlashTmr); geoFlashTmr = null; }
+      if (geoZoomTmr)  { clearTimeout(geoZoomTmr);   geoZoomTmr  = null; }
+      geoSvgSel = null; geoMapReady = false; geoScoreVal = 0; geoHighlightQueue = [];
     }
 
     // ── WebSocket ──────────────────────────────────────────────────────────────
@@ -943,6 +1671,20 @@
             break;
           case 'edu_hide':
             toggleEduMode(false);
+            break;
+          case 'planet_start':
+            toggleEduMode(true);
+            initPlanetDisplay();
+            break;
+          case 'planet_show':
+            showPlanet(ev);
+            break;
+          case 'geo_start':
+            toggleEduMode(true);
+            initGeoMap();   // async — highlights are queued until ready
+            break;
+          case 'geo_highlight':
+            geoHighlight(ev.id, ev.state, ev.score, ev.round, ev.total);
             break;
         }
       };

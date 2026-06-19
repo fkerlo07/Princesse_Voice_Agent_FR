@@ -2,6 +2,10 @@ aiohttp
 chromadb
 ddgs
 duckduckgo-search
+faster-whisper
+langchain-core
+langchain-ollama
+langgraph
 numpy
 openwakeword
 piper-tts
