@@ -8,21 +8,18 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 
 # ── Ollama ────────────────────────────────────────────────────────────────────
-OLLAMA_BASE_URL = "http://127.0.0.1:11434"          # used by LangChain
-OLLAMA_URL      = "http://127.0.0.1:11434/api/chat" # kept for legacy compat
-LLM_MODEL       = "ministral-3:3b"   # main model — answers the user
-ROUTER_MODEL    = "gemma3:1b"        # small model — decides if web search needed
+OLLAMA_BASE_URL = "http://127.0.0.1:11434"
+OLLAMA_URL      = "http://127.0.0.1:11434/api/chat"
+
+# Single model handles STT (audio understanding) + LLM response
+GEMMA4_MODEL   = "gemma4:e2b"
+OLLAMA_KEEP_ALIVE = -1
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 PIPER_MODEL    = "/Users/floriankerlogot/models/fr_FR-siwis-medium.onnx"
-VOSK_MODEL_FR  = "/Users/floriankerlogot/models/vosk-model-small-fr-0.22"  # kept for reference
-
-# ── Whisper STT ───────────────────────────────────────────────────────────────
-# Sizes: tiny / base / small / medium — small is the best speed/accuracy tradeoff on M1
-WHISPER_MODEL  = "small"
-UI_HTML       = ROOT / "ui.html"
-CHROMA_DB_DIR = ROOT / "chroma_db"
-STORIES_DIR   = ROOT / "stories"
+UI_HTML        = ROOT / "ui.html"
+CHROMA_DB_DIR  = ROOT / "chroma_db"
+STORIES_DIR    = ROOT / "stories"
 
 # ── Microphone ────────────────────────────────────────────────────────────────
 MIC_RATE      = 16_000
@@ -31,20 +28,17 @@ MIC_BLOCKSIZE = 1280           # 80 ms — required by OpenWakeWord
 
 # ── Wake word ─────────────────────────────────────────────────────────────────
 OWW_MODEL     = "hey_jarvis"
-OWW_THRESHOLD = 0.5            # detection confidence threshold
+OWW_THRESHOLD = 0.5
 
 # ── UI server ─────────────────────────────────────────────────────────────────
 UI_PORT = 8080
 
 # ── Tool calling ──────────────────────────────────────────────────────────────
 SEARCH_MAX_RESULTS = 4
-# Speak as soon as ANY sentence boundary is hit (set >0 to buffer more text first)
 MIN_TTS_CHUNK_LEN  = 0
-# How long Ollama keeps models in memory (-1 = forever, keeps router+LLM both hot)
-OLLAMA_KEEP_ALIVE  = -1
 
 # ── Listening timeout ─────────────────────────────────────────────────────────
-LISTEN_TIMEOUT_S = 5.0         # seconds before giving up and returning to sleep
+LISTEN_TIMEOUT_S = 6.0
 
 # ── Prompts ───────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = (
@@ -59,12 +53,12 @@ ROUTER_PROMPT = (
     "Les actions possibles sont :\n"
     "- 'web_search': si la question nécessite des informations de recherche web.\n"
     "- 'play_story': si l'utilisateur demande à écouter une histoire ou un conte.\n"
-    "- 'learn_alphabet': si l'utilisateur veut apprendre l'alphabet (ex: 'je veux apprendre l\\'alphabet').\n"
-    "- 'learn_reading': si l'utilisateur veut apprendre à lire (ex: 'apprends moi à lire').\n"
-    "- 'learn_counting': si l'utilisateur veut apprendre à compter (ex: 'apprends moi à compter').\n"
-    "- 'learn_geography': si l'utilisateur veut apprendre la géographie ou les pays du monde (ex: 'apprends moi la géographie', 'montre-moi les pays sur la carte').\n"
-    "- 'learn_planets': si l'utilisateur veut apprendre les planètes du système solaire (ex: 'apprends moi les planètes', 'joue au quiz des planètes').\n"
+    "- 'learn_alphabet': si l'utilisateur veut apprendre l'alphabet.\n"
+    "- 'learn_reading': si l'utilisateur veut apprendre à lire.\n"
+    "- 'learn_counting': si l'utilisateur veut apprendre à compter.\n"
+    "- 'learn_geography': si l'utilisateur veut apprendre la géographie ou les pays du monde.\n"
+    "- 'learn_planets': si l'utilisateur veut apprendre les planètes du système solaire.\n"
     "- 'none': si aucune de ces actions n'est requise.\n\n"
-    "Réponds UNIQUEMENT avec du JSON valide, au format suivant, sans explication.\n"
-    "Format attendu: {\"action\": \"web_search\" | \"play_story\" | \"learn_alphabet\" | \"learn_reading\" | \"learn_counting\" | \"learn_geography\" | \"none\", \"query\": \"requête si nécessaire, sinon vide\"}"
+    "Réponds UNIQUEMENT avec du JSON valide, sans explication.\n"
+    "Format: {\"action\": \"web_search\"|\"play_story\"|\"learn_alphabet\"|\"learn_reading\"|\"learn_counting\"|\"learn_geography\"|\"learn_planets\"|\"none\", \"query\": \"requête ou vide\"}"
 )
